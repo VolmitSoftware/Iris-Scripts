@@ -1,0 +1,23 @@
+# Version catalog is a central place for you to declare and version dependencies
+# https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
+# https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
+
+[versions]
+kotlin = "2.1.20"
+kotlin-coroutines = "1.9.0"
+spigot-api = "1.20.1-R0.1-SNAPSHOT"
+caffeine = "3.2.0"
+
+[libraries]
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlin-scripting-common = { module = "org.jetbrains.kotlin:kotlin-scripting-common", version.ref = "kotlin" }
+kotlin-scripting-jvm = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm", version.ref = "kotlin" }
+kotlin-scripting-jvm-host = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm-host", version.ref = "kotlin" }
+kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines"}
+kotlin-scripting-dependencies-maven = { module = "org.jetbrains.kotlin:kotlin-scripting-dependencies-maven", version.ref = "kotlin"}
+spigot-api = { module = "org.spigotmc:spigot-api", version.ref = "spigot-api" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine"}
+
+[plugins]
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+shadow = { id = "com.gradleup.shadow", version = "8.3.6" }
