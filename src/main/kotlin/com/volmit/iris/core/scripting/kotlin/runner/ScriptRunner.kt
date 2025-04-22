@@ -1,9 +1,5 @@
 package com.volmit.iris.core.scripting.kotlin.runner
 
-import de.crazydev22.kts.configureMavenDepsOnAnnotations
-import de.crazydev22.kts.map
-import de.crazydev22.kts.walker
-import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.*
@@ -23,7 +19,6 @@ class ScriptRunner(
 ) {
     constructor() : this(BasicJvmScriptingHost())
 
-    private val owner = walker.callerClass
     private val configs = ConcurrentHashMap<KClass<*>, ScriptCompilationConfiguration>()
     private val hostConfig = host.baseHostConfiguration.withDefaultsFrom(defaultJvmScriptingHostConfiguration)
 
@@ -31,8 +26,6 @@ class ScriptRunner(
         .map { it[ScriptCompilationConfiguration.dependencies] }
         .flatMap { it.toClassPathOrEmpty() }
         .distinct()
-
-    fun compileFile(type: KClass<*>, file: File) = compile(type, file.toScriptSource())
 
     fun compileText(type: KClass<*>, raw: String, name: String? = null) = compile(type, raw.toScriptSource(name))
 
@@ -53,7 +46,6 @@ class ScriptRunner(
     ) {
         jvm {
             dependenciesFromClassContext(type, wholeClasspath = true)
-            dependenciesFromClassContext(owner.kotlin, wholeClasspath = true)
         }
 
         refineConfiguration {

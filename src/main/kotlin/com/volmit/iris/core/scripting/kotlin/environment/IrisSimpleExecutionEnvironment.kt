@@ -9,7 +9,7 @@ import com.volmit.iris.core.scripting.kotlin.runner.ScriptRunner
 import com.volmit.iris.util.collection.KMap
 import com.volmit.iris.util.data.KCache
 import com.volmit.iris.util.format.C
-import de.crazydev22.kts.valueOrNull
+import com.volmit.iris.core.scripting.kotlin.runner.valueOrNull
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.valueOrThrow
@@ -41,9 +41,9 @@ open class IrisSimpleExecutionEnvironment : ExecutionEnvironment.Simple {
         type: Class<*>,
         vars: Map<String, Any?>?,
         vararg args: Any?
-    ): Any? = {
+    ): Any? {
         Iris.debug("Execute Script (for result) " + C.DARK_GREEN + script)
-        evaluate0(script, type.kotlin, vars ?: emptyMap(), *args)
+        return evaluate0(script, type.kotlin, vars ?: emptyMap(), *args)
     }
 
     override fun close() {
@@ -57,6 +57,9 @@ open class IrisSimpleExecutionEnvironment : ExecutionEnvironment.Simple {
         .valueOrThrow()
 
     private fun evaluate0(name: String, type: KClass<*>, properties: Map<String, Any?>, vararg args: Any?): Any? {
+        val current = Thread.currentThread()
+        val loader = current.contextClassLoader
+        current.contextClassLoader = this.javaClass.classLoader
         try {
             return compile0(name, type)
                 .evaluate(properties, *args)
@@ -65,6 +68,7 @@ open class IrisSimpleExecutionEnvironment : ExecutionEnvironment.Simple {
         } catch (e: Throwable) {
             e.printStackTrace()
         }
+        current.contextClassLoader = loader
 
         return null
     }

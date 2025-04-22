@@ -34,6 +34,17 @@ kotlin {
     jvmToolchain(21)
 }
 
+tasks.shadowJar {
+    val files = configurations.get().flatMap { it.files }.distinct()
+    configurations = listOf()
+
+    into(".").from(*files.toTypedArray())
+
+    manifest {
+        attributes("Libraries" to files.joinToString(";") { "${it.name}" })
+    }
+}
+
 publishing.publications.create<MavenPublication>("maven") {
     from(components["shadow"])
     artifactId = project.name
