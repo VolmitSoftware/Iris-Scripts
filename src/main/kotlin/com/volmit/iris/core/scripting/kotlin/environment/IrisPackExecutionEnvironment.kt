@@ -2,10 +2,12 @@ package com.volmit.iris.core.scripting.kotlin.environment
 
 import com.volmit.iris.core.loader.IrisData
 import com.volmit.iris.core.scripting.ExecutionEnvironment
+import com.volmit.iris.core.scripting.kotlin.runner.addEntries
 import com.volmit.iris.core.scripting.kotlin.base.EngineScript
 import com.volmit.iris.core.scripting.kotlin.base.MobSpawningScript
 import com.volmit.iris.core.scripting.kotlin.base.PostMobSpawningScript
 import com.volmit.iris.core.scripting.kotlin.base.PreprocessorScript
+import com.volmit.iris.core.scripting.kotlin.runner.format
 import com.volmit.iris.core.scripting.kotlin.runner.Script
 import java.io.File
 import kotlin.reflect.KClass
@@ -19,8 +21,24 @@ open class IrisPackExecutionEnvironment(
 
     override fun buildProject() {
         data.dataFolder.mkdirs()
+        val libs = runner.classPath(
+            EngineScript::class,
+            MobSpawningScript::class,
+            PostMobSpawningScript::class,
+            PreprocessorScript::class
+        ).sortedBy { it.absolutePath }
+
         File(data.dataFolder, "build.gradle.kts")
-            .writeText(buildGradle)
+            .writeText(libs.buildGradle)
+
+        val workspace = File(data.dataFolder, ".idea/workspace.xml")
+        addEntries(workspace, "classpath", libs.format(data.dataFolder))
+        addEntries(workspace, "templates", listOf(
+            "com.volmit.iris.core.scripting.kotlin.base.EngineScript",
+            "com.volmit.iris.core.scripting.kotlin.base.MobSpawningScript",
+            "com.volmit.iris.core.scripting.kotlin.base.PostMobSpawningScript",
+            "com.volmit.iris.core.scripting.kotlin.base.PreprocessorScript"
+        ))
     }
 
     override fun compile(script: String, type: KClass<*>): Script {
@@ -30,15 +48,8 @@ open class IrisPackExecutionEnvironment(
             .valueOrThrow()
     }
 
-    private val buildGradle
-        get() = BASE_GRADLE.replace("<classpath>",
-            runner.classPath(
-                EngineScript::class,
-                MobSpawningScript::class,
-                PostMobSpawningScript::class,
-                PreprocessorScript::class)
-                .sortedBy { it.absolutePath }
-                .joinToString(",\n        ") { "\"${it.escapedPath}\"" })
+    private val List<File>.buildGradle
+        get() = BASE_GRADLE.replace("<classpath>", joinToString(",\n        ") { "\"${it.escapedPath}\"" })
 
     companion object {
         private val File.escapedPath
