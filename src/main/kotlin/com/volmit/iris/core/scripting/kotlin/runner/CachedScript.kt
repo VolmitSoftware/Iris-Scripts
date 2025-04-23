@@ -37,17 +37,16 @@ data class CachedScript(
         return cached
     }
 
-    override fun evaluate(properties: Map<String, Any?>, vararg arguments: Any?) = host.runInCoroutineContext {
-        host.evaluator.invoke(this, createEvaluationConfiguration(properties, arguments))
+    override fun evaluate(properties: Map<String, Any?>?) = host.runInCoroutineContext {
+        host.evaluator.invoke(this, createEvaluationConfiguration(properties))
     }
 
-    private fun createEvaluationConfiguration(properties: Map<String, Any?>, arguments: Array<out Any?>): ScriptEvaluationConfiguration {
-        if (properties.isEmpty() && arguments.isEmpty())
+    private fun createEvaluationConfiguration(properties: Map<String, Any?>?): ScriptEvaluationConfiguration {
+        if (properties == null || properties.isEmpty())
             return evalConfig
 
         return evalConfig.with {
             providedProperties(properties)
-            constructorArgs(*arguments)
         }
     }
 

@@ -4,5 +4,5 @@ import kotlin.script.experimental.api.EvaluationResult
 import kotlin.script.experimental.api.ResultWithDiagnostics
 
 interface Script {
-    fun evaluate(properties: Map<String, Any?>, vararg arguments: Any?): ResultWithDiagnostics<EvaluationResult>
+    fun evaluate(properties: Map<String, Any?>?): ResultWithDiagnostics<EvaluationResult>
 }

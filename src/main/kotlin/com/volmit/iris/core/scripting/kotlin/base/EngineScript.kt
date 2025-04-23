@@ -1,26 +1,36 @@
 package com.volmit.iris.core.scripting.kotlin.base
 
-import com.volmit.iris.Iris
 import com.volmit.iris.core.loader.IrisData
+import com.volmit.iris.core.scripting.func.BiomeLookup
 import com.volmit.iris.engine.IrisComplex
 import com.volmit.iris.engine.framework.Engine
-import com.volmit.iris.engine.`object`.IrisBiome
 import com.volmit.iris.engine.`object`.IrisDimension
 import kotlin.script.experimental.annotations.KotlinScript
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.defaultImports
+import kotlin.script.experimental.api.isStandalone
+import kotlin.script.experimental.api.providedProperties
 
-@KotlinScript(fileExtension = "engine.kts")
-abstract class EngineScript(
-    val engine: Engine
-) {
-    val data: IrisData get() = engine.data
-    val complex: IrisComplex get() = engine.complex
-    val seed: Long get() = engine.seedManager.seed
-    val dimension: IrisDimension get() = engine.dimension
+@KotlinScript(fileExtension = "engine.kts", compilationConfiguration = EngineScriptDefinition::class)
+abstract class EngineScript
 
-    fun getBiomeAt(x: Int, z: Int): IrisBiome = engine.getSurfaceBiome(x, z)
+object EngineScriptDefinition : ScriptCompilationConfiguration({
+    isStandalone(false)
+    defaultImports(
+        "com.volmit.iris.Iris.info",
+        "com.volmit.iris.Iris.debug",
+        "com.volmit.iris.Iris.warn",
+        "com.volmit.iris.Iris.error"
+    )
 
-    fun info(log: String, vararg args: Any?) = Iris.info(log, *args)
-    fun debug(log: String, vararg args: Any?) = Iris.debug(log.format(*args))
-    fun warn(log: String, vararg args: Any?) = Iris.warn(log, *args)
-    fun error(log: String, vararg args: Any?) = Iris.error(log, *args)
+    providedProperties(
+        "engine" to Engine::class,
+        "data" to IrisData::class,
+        "complex" to IrisComplex::class,
+        "seed" to Long::class,
+        "dimension" to IrisDimension::class,
+        "biome" to BiomeLookup::class,
+    )
+}) {
+    private fun readResolve(): Any = EngineScriptDefinition
 }

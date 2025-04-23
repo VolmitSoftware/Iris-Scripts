@@ -3,13 +3,13 @@ package com.volmit.iris.core.scripting.kotlin.environment
 import com.volmit.iris.Iris
 import com.volmit.iris.core.IrisSettings
 import com.volmit.iris.core.scripting.ExecutionEnvironment
-import com.volmit.iris.core.scripting.kotlin.base.SimpleScript
+import com.volmit.iris.core.scripting.kotlin.base.*
 import com.volmit.iris.core.scripting.kotlin.runner.Script
 import com.volmit.iris.core.scripting.kotlin.runner.ScriptRunner
+import com.volmit.iris.core.scripting.kotlin.runner.valueOrNull
 import com.volmit.iris.util.collection.KMap
 import com.volmit.iris.util.data.KCache
 import com.volmit.iris.util.format.C
-import com.volmit.iris.core.scripting.kotlin.runner.valueOrNull
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.valueOrThrow
@@ -20,30 +20,28 @@ open class IrisSimpleExecutionEnvironment : ExecutionEnvironment.Simple {
 
     override fun execute(
         script: String
-    ) = execute(script, SimpleScript::class.java, emptyMap())
+    ) = execute(script, SimpleScript::class.java, null)
 
     override fun execute(
         script: String,
         type: Class<*>,
-        vars: Map<String, Any?>?,
-        vararg args: Any?
+        vars: Map<String, Any?>?
     ) {
         Iris.debug("Execute Script (void) " + C.DARK_GREEN + script)
-        evaluate0(script, type.kotlin, vars ?: emptyMap(), *args)
+        evaluate0(script, type.kotlin, vars)
     }
 
     override fun evaluate(
         script: String
-    ): Any? = evaluate(script, SimpleScript::class.java, emptyMap())
+    ): Any? = evaluate(script, SimpleScript::class.java, null)
 
     override fun evaluate(
         script: String,
         type: Class<*>,
-        vars: Map<String, Any?>?,
-        vararg args: Any?
+        vars: Map<String, Any?>?
     ): Any? {
         Iris.debug("Execute Script (for result) " + C.DARK_GREEN + script)
-        return evaluate0(script, type.kotlin, vars ?: emptyMap(), *args)
+        return evaluate0(script, type.kotlin, vars)
     }
 
     override fun close() {
@@ -51,18 +49,18 @@ open class IrisSimpleExecutionEnvironment : ExecutionEnvironment.Simple {
         runner.clearConfigurations()
     }
 
-    protected open fun compile0(script: String, type: KClass<*>) =
+    protected open fun compile(script: String, type: KClass<*>) =
         compileCache.get(script)
         .computeIfAbsent(type) { _ -> runner.compileText(type, script) }
         .valueOrThrow()
 
-    private fun evaluate0(name: String, type: KClass<*>, properties: Map<String, Any?>, vararg args: Any?): Any? {
+    private fun evaluate0(name: String, type: KClass<*>, properties: Map<String, Any?>? = null): Any? {
         val current = Thread.currentThread()
         val loader = current.contextClassLoader
         current.contextClassLoader = this.javaClass.classLoader
         try {
-            return compile0(name, type)
-                .evaluate(properties, *args)
+            return compile(name, type)
+                .evaluate(properties)
                 .valueOrThrow()
                 .valueOrNull()
         } catch (e: Throwable) {
