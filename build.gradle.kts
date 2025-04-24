@@ -28,6 +28,7 @@ dependencies {
     compileOnly(fileTree("libs"))
     compileOnly(libs.caffeine)
     compileOnly(libs.spigot.api)
+    compileOnly(libs.dom4j)
 }
 
 kotlin {

@@ -7,6 +7,7 @@ kotlin = "2.1.20"
 kotlin-coroutines = "1.9.0"
 spigot-api = "1.20.1-R0.1-SNAPSHOT"
 caffeine = "3.2.0"
+dom4j = "2.1.4"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
@@ -17,6 +18,7 @@ kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", 
 kotlin-scripting-dependencies-maven = { module = "org.jetbrains.kotlin:kotlin-scripting-dependencies-maven", version.ref = "kotlin"}
 spigot-api = { module = "org.spigotmc:spigot-api", version.ref = "spigot-api" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine"}
+dom4j = { module = "org.dom4j:dom4j", version.ref = "dom4j" }
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

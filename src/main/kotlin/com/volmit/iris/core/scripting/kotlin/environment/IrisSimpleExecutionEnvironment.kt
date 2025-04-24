@@ -6,10 +6,15 @@ import com.volmit.iris.core.scripting.ExecutionEnvironment
 import com.volmit.iris.core.scripting.kotlin.base.*
 import com.volmit.iris.core.scripting.kotlin.runner.Script
 import com.volmit.iris.core.scripting.kotlin.runner.ScriptRunner
+import com.volmit.iris.core.scripting.kotlin.runner.addScriptDefinitions
+import com.volmit.iris.core.scripting.kotlin.runner.addScriptTemplateEntries
+import com.volmit.iris.core.scripting.kotlin.runner.format
 import com.volmit.iris.core.scripting.kotlin.runner.valueOrNull
 import com.volmit.iris.util.collection.KMap
 import com.volmit.iris.util.data.KCache
 import com.volmit.iris.util.format.C
+import org.dom4j.Document
+import java.io.File
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.valueOrThrow
@@ -69,5 +74,61 @@ open class IrisSimpleExecutionEnvironment : ExecutionEnvironment.Simple {
         current.contextClassLoader = loader
 
         return null
+    }
+
+    override fun configureProject(projectDir: File, workspace: Document): Boolean {
+        projectDir.mkdirs()
+        val libs = runner.classPath(
+            EngineScript::class,
+            MobSpawningScript::class,
+            PostMobSpawningScript::class,
+            PreprocessorScript::class
+        ).sortedBy { it.absolutePath }
+
+        File(projectDir, "build.gradle.kts")
+            .writeText(libs.buildGradle)
+
+        val classpath = workspace.addScriptTemplateEntries("classpath", libs.format(projectDir))
+        val templates = workspace.addScriptTemplateEntries("templates", scriptTemplates)
+        val definitions = workspace.addScriptDefinitions(scriptTemplates)
+
+        return classpath || templates || definitions
+    }
+
+    companion object {
+        private val scriptTemplates = listOf(
+            "com.volmit.iris.core.scripting.kotlin.base.EngineScript",
+            "com.volmit.iris.core.scripting.kotlin.base.MobSpawningScript",
+            "com.volmit.iris.core.scripting.kotlin.base.PostMobSpawningScript",
+            "com.volmit.iris.core.scripting.kotlin.base.PreprocessorScript"
+        )
+
+        private val List<File>.buildGradle
+            get() = BASE_GRADLE.replace("<classpath>", joinToString(",\n        ") { "\"${it.escapedPath}\"" })
+
+        private val File.escapedPath
+            get() = absolutePath.replace("\\", "\\\\").replace("\"", "\\\"")
+
+        private val BASE_GRADLE = """
+            plugins {
+                kotlin("jvm") version("2.1.20")
+            }
+
+            repositories {
+                mavenCentral()
+            }
+
+            val script by configurations.creating
+            configurations.compileOnly { extendsFrom(script) }
+            configurations.kotlinScriptDef { extendsFrom(script) }
+            configurations.kotlinScriptDefExtensions { extendsFrom(script) }
+            configurations.kotlinCompilerClasspath { extendsFrom(script) }
+            configurations.kotlinCompilerPluginClasspath { extendsFrom(script) }
+
+            dependencies {
+                add("script", files(
+                    <classpath>
+                ))
+            }""".trimIndent()
     }
 }
