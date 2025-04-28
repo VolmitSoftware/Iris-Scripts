@@ -52,3 +52,9 @@ publishing.publications.create<MavenPublication>("maven") {
     from(components["shadow"])
     artifactId = project.name
 }
+
+afterEvaluate {
+    tasks.named("generatePomFileForMavenPublication") {
+        mustRunAfter("slimJar")
+    }
+}
