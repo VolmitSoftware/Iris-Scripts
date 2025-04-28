@@ -7,7 +7,8 @@ kotlin = "2.1.20"
 kotlin-coroutines = "1.9.0"
 spigot-api = "1.20.1-R0.1-SNAPSHOT"
 caffeine = "3.2.0"
-dom4j = "2.1.4"
+shadow = "8.3.6" # "9.0.0-beta12"
+slimjar = "1.7.1"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
@@ -18,8 +19,9 @@ kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", 
 kotlin-scripting-dependencies-maven = { module = "org.jetbrains.kotlin:kotlin-scripting-dependencies-maven", version.ref = "kotlin"}
 spigot-api = { module = "org.spigotmc:spigot-api", version.ref = "spigot-api" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine"}
-dom4j = { module = "org.dom4j:dom4j", version.ref = "dom4j" }
+slimjar = { module = "de.crazydev22.slimjar:slimjar", version.ref = "slimjar" }
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta12" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+slimjar = { id = "de.crazydev22.slimjar", version.ref = "slimjar" }

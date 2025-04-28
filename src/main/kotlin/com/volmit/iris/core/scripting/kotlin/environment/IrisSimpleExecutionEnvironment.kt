@@ -6,18 +6,16 @@ import com.volmit.iris.core.scripting.ExecutionEnvironment
 import com.volmit.iris.core.scripting.kotlin.base.*
 import com.volmit.iris.core.scripting.kotlin.runner.Script
 import com.volmit.iris.core.scripting.kotlin.runner.ScriptRunner
-import com.volmit.iris.core.scripting.kotlin.runner.addScriptDefinitions
-import com.volmit.iris.core.scripting.kotlin.runner.addScriptTemplateEntries
-import com.volmit.iris.core.scripting.kotlin.runner.format
+import com.volmit.iris.core.scripting.kotlin.runner.classpath
 import com.volmit.iris.core.scripting.kotlin.runner.valueOrNull
 import com.volmit.iris.util.collection.KMap
 import com.volmit.iris.util.data.KCache
 import com.volmit.iris.util.format.C
-import org.dom4j.Document
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.valueOrThrow
+import kotlin.text.split
 
 open class IrisSimpleExecutionEnvironment : ExecutionEnvironment.Simple {
     protected val compileCache = KCache<String, KMap<KClass<*>, ResultWithDiagnostics<Script>>>({ _ -> KMap() }, IrisSettings.get().performance.cacheSize.toLong())
@@ -56,8 +54,8 @@ open class IrisSimpleExecutionEnvironment : ExecutionEnvironment.Simple {
 
     protected open fun compile(script: String, type: KClass<*>) =
         compileCache.get(script)
-        .computeIfAbsent(type) { _ -> runner.compileText(type, script) }
-        .valueOrThrow()
+            .computeIfAbsent(type) { _ -> runner.compileText(type, script) }
+            .valueOrThrow()
 
     private fun evaluate0(name: String, type: KClass<*>, properties: Map<String, Any?>? = null): Any? {
         val current = Thread.currentThread()
@@ -76,40 +74,45 @@ open class IrisSimpleExecutionEnvironment : ExecutionEnvironment.Simple {
         return null
     }
 
-    override fun configureProject(projectDir: File, workspace: Document): Boolean {
+    override fun configureProject(projectDir: File) {
         projectDir.mkdirs()
-        val libs = runner.classPath(
-            EngineScript::class,
-            MobSpawningScript::class,
-            PostMobSpawningScript::class,
-            PreprocessorScript::class
-        ).sortedBy { it.absolutePath }
+        val libs = javaClass.classLoader.parent.classpath
+            .sortedBy { it.absolutePath }
+            .toMutableList()
+        libs.add(codeSource)
+        libs.removeIf { libs.count { f -> f.name == it.name } > 1 }
 
         File(projectDir, "build.gradle.kts")
-            .writeText(libs.buildGradle)
-
-        val classpath = workspace.addScriptTemplateEntries("classpath", libs.format(projectDir))
-        val templates = workspace.addScriptTemplateEntries("templates", scriptTemplates)
-        val definitions = workspace.addScriptDefinitions(scriptTemplates)
-
-        return classpath || templates || definitions
+            .updateClasspath(libs)
     }
 
     companion object {
-        private val scriptTemplates = listOf(
-            "com.volmit.iris.core.scripting.kotlin.base.EngineScript",
-            "com.volmit.iris.core.scripting.kotlin.base.MobSpawningScript",
-            "com.volmit.iris.core.scripting.kotlin.base.PostMobSpawningScript",
-            "com.volmit.iris.core.scripting.kotlin.base.PreprocessorScript"
-        )
+        private const val CLASSPATH = "val classpath = files("
+        private val codeSource = File(IrisSimpleExecutionEnvironment::class.java.protectionDomain.codeSource.location.toURI())
 
-        private val List<File>.buildGradle
-            get() = BASE_GRADLE.replace("<classpath>", joinToString(",\n        ") { "\"${it.escapedPath}\"" })
+        private fun File.updateClasspath(classpath: List<File>) {
+            val test = if (exists()) readLines() else BASE_GRADLE
+            writeText(test.updateClasspath(classpath))
+        }
+
+        private fun List<String>.updateClasspath(classpath: List<File>): String {
+            val classpath = classpath.joinToString(",", CLASSPATH, ")") { "\"${it.escapedPath}\"" }
+            val index = indexOfFirst { it.startsWith(CLASSPATH) }
+            if (index == -1) {
+                return "$classpath\n${joinToString("\n")}"
+            }
+
+            val mod = toMutableList()
+            mod[index] = classpath
+            return mod.joinToString("\n")
+        }
 
         private val File.escapedPath
             get() = absolutePath.replace("\\", "\\\\").replace("\"", "\\\"")
 
         private val BASE_GRADLE = """
+            val classpath = files()
+            
             plugins {
                 kotlin("jvm") version("2.1.20")
             }
@@ -126,9 +129,7 @@ open class IrisSimpleExecutionEnvironment : ExecutionEnvironment.Simple {
             configurations.kotlinCompilerPluginClasspath { extendsFrom(script) }
 
             dependencies {
-                add("script", files(
-                    <classpath>
-                ))
-            }""".trimIndent()
+                add("script", classpath)
+            }""".trimIndent().split("\n")
     }
 }

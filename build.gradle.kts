@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.shadow)
+    alias(libs.plugins.slimjar)
     `maven-publish`
 }
 
@@ -10,41 +11,42 @@ version = "0.0.1"
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.crazydev22.de/public")
 }
 
 dependencies {
+    implementation(libs.slimjar)
+
     // Kotlin standard library
-    implementation(libs.kotlin.stdlib)
+    slim(libs.kotlin.stdlib)
 
     // Kotlin coroutines dependencies
-    implementation(libs.kotlin.coroutines)
+    slim(libs.kotlin.coroutines)
 
     // Kotlin scripting dependencies
-    implementation(libs.kotlin.scripting.common)
-    implementation(libs.kotlin.scripting.jvm)
-    implementation(libs.kotlin.scripting.jvm.host)
-    implementation(libs.kotlin.scripting.dependencies.maven)
+    slim(libs.kotlin.scripting.common)
+    slim(libs.kotlin.scripting.jvm)
+    slim(libs.kotlin.scripting.jvm.host)
+    slim(libs.kotlin.scripting.dependencies.maven)
 
     compileOnly(fileTree("libs"))
     compileOnly(libs.caffeine)
     compileOnly(libs.spigot.api)
-    compileOnly(libs.dom4j)
 }
 
 kotlin {
     jvmToolchain(21)
 }
 
-tasks.shadowJar {
-    val files = configurations.get().flatMap { it.files }.distinct()
-    configurations = listOf()
+slimJar {
+    globalRepositories = setOf(ArtifactRepositoryContainer.MAVEN_CENTRAL_URL)
 
-    into(".").from(*files.toTypedArray())
-
-    manifest {
-        attributes("Libraries" to files.joinToString(";") { "${it.name}" })
-    }
+    relocate("org.apache.maven", "com.volmit.iris.libs.maven")
+    relocate("org.codehaus.plexus", "com.volmit.iris.libs.plexus")
+    relocate("org.eclipse.sisu", "com.volmit.iris.libs.sisu")
 }
+
+tasks.shadowJar { dependsOn("slimJar") }
 
 publishing.publications.create<MavenPublication>("maven") {
     from(components["shadow"])
