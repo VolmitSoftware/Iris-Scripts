@@ -19,8 +19,7 @@ public final class SlimApp {
             if (loaded.getAndSet(true)) return;
             ApplicationBuilder.appending("iris-scripting")
                     .logger((message, args) -> {
-                        if (!message.startsWith("Downloading ") && !message.startsWith("Loaded library "))
-                            return;
+                        if (!message.startsWith("Loaded library ")) return;
                         LOGGER.info(message.formatted(args));
                     })
                     .build();

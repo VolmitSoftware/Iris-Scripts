@@ -1,3 +1,5 @@
+import io.github.slimjar.func.slimjar
+
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.shadow)
@@ -11,11 +13,10 @@ version = "0.0.1"
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
-    maven("https://repo.crazydev22.de/public")
 }
 
 dependencies {
-    implementation(libs.slimjar)
+    implementation(slimjar())
 
     // Kotlin standard library
     slim(libs.kotlin.stdlib)
@@ -46,15 +47,7 @@ slimJar {
     relocate("org.eclipse.sisu", "com.volmit.iris.libs.sisu")
 }
 
-tasks.shadowJar { dependsOn("slimJar") }
-
 publishing.publications.create<MavenPublication>("maven") {
     from(components["shadow"])
     artifactId = project.name
-}
-
-afterEvaluate {
-    tasks.named("generatePomFileForMavenPublication") {
-        mustRunAfter("slimJar")
-    }
 }

@@ -8,7 +8,7 @@ kotlin-coroutines = "1.9.0"
 spigot-api = "1.20.1-R0.1-SNAPSHOT"
 caffeine = "3.2.0"
 shadow = "8.3.6" # "9.0.0-beta12"
-slimjar = "1.7.1"
+slimjar = "2.0.5"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
@@ -19,7 +19,6 @@ kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", 
 kotlin-scripting-dependencies-maven = { module = "org.jetbrains.kotlin:kotlin-scripting-dependencies-maven", version.ref = "kotlin"}
 spigot-api = { module = "org.spigotmc:spigot-api", version.ref = "spigot-api" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine"}
-slimjar = { module = "de.crazydev22.slimjar:slimjar", version.ref = "slimjar" }
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
